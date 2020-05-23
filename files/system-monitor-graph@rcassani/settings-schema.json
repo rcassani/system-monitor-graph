@@ -1,31 +1,31 @@
 {
-  "head0": {
-    "type": "header",
-    "description": "Settings for system-monitor-graph@rcassani"
-  },
+    "head0": {
+        "type": "header",
+        "description": "Settings for system-monitor-graph@rcassani"
+    },
 
-  "head1": {
-    "type": "header",
-    "description": "General"
-  },
-  "type": {
-    "type": "combobox",
-    "default": "cpu",
-    "description": "System variable for graph",
-    "tooltip": "Select the system variable to monitor.",
-    "options" : {
-      "CPU" : "cpu",
-      "RAM": "ram"
+    "head1": {
+        "type": "header",
+        "description": "General"
+    },
+    "type": {
+        "type": "combobox",
+        "default": "cpu",
+        "description": "System variable for graph",
+        "tooltip": "Select the system variable to monitor.",
+        "options" : {
+            "CPU" : "cpu",
+            "RAM": "ram"
+        }
+    },
+
+    "head2": {
+        "type": "header",
+        "description": "Visual"
+    },
+    "line-color": {
+        "type": "colorchooser",
+        "default": "rgba(50,168,82,1.0)",
+        "description": "Line color"
     }
-  },
-
-  "head2": {
-    "type": "header",
-    "description": "Visual"
-  },
-  "line-color": {
-    "type": "colorchooser",
-    "default": "rgba(50,168,82,1.0)",
-    "description": "Line color"
-  }
 }
