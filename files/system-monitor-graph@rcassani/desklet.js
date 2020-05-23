@@ -26,15 +26,35 @@ MyDesklet.prototype = {
     },
 
     setupUI: function(){
+        // initialize size
+
+        // create the clutter elements
+
+        // type of system variable to graph
         var type = this.type;
 
         // creates container for one child
         this.window = new St.Bin();
-        // creates a label with text
-        this.text = new St.Label({text: "Hello Desktop ".concat(type)});
+        // creates a label to present text
+        this.text = new St.Label();
         // adds label to container
         this.window.add_actor(this.text);
         // Sets the container as content actor of the desklet
         this.setContent(this.window);
+
+        // set decoration settings
+
+        // set initial values
+        this.update();
     },
+
+    update: function() {
+        // console log
+        global.log("update SMG");
+        // do the graph
+        var type = this.type;
+        // add text to label
+        this.text.set_text("Hello Desktop2 ".concat(type));
+    }
+
 };
