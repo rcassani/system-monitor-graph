@@ -1,5 +1,9 @@
 const Desklet = imports.ui.desklet;
 const Settings = imports.ui.settings;
+const Mainloop = imports.mainloop;
+const Lang = imports.lang;
+
+
 
 const St = imports.gi.St;
 
@@ -55,6 +59,12 @@ MyDesklet.prototype = {
         var type = this.type;
         // add text to label
         this.text.set_text("Hello Desktop2 ".concat(type));
+        // call this.update() in 5 seconds
+        this.timeout = Mainloop.timeout_add_seconds(5, Lang.bind(this, this.update));
+    },
+
+    on_desklet_removed: function() {
+        Mainloop.source_remove(this.timeout);
     }
 
 };
