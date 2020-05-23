@@ -63,6 +63,14 @@ MyDesklet.prototype = {
         this.timeout = Mainloop.timeout_add_seconds(5, Lang.bind(this, this.update));
     },
 
+    on_setting_changed: function() {
+        // update decoration settings
+//        this.refreshDecoration();
+        // settings changed; instant refresh
+        Mainloop.source_remove(this.timeout);
+        this.update();
+   },
+
     on_desklet_removed: function() {
         Mainloop.source_remove(this.timeout);
     }
