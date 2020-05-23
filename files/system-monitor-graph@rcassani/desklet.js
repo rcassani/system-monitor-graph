@@ -2,6 +2,8 @@ const Desklet = imports.ui.desklet;
 const Settings = imports.ui.settings;
 const Mainloop = imports.mainloop;
 const Lang = imports.lang;
+const Clutter = imports.gi.Clutter;
+
 
 
 
@@ -33,18 +35,24 @@ MyDesklet.prototype = {
         // initialize size
 
         // create the clutter elements
-
-        // type of system variable to graph
-        var type = this.type;
-
         // creates container for one child
-        this.window = new St.Bin();
+//        this.window = new St.Bin();
         // creates a label to present text
-        this.text = new St.Label();
+  //      this.text = new St.Label();
         // adds label to container
-        this.window.add_actor(this.text);
+    //    this.window.add_actor(this.text);
         // Sets the container as content actor of the desklet
-        this.setContent(this.window);
+      //  this.setContent(this.window);
+
+        this.canvas = new Clutter.Actor();
+        this.canvas.remove_all_children();
+        this.text1 = new St.Label();
+		    this.text2 = new St.Label();
+
+        this.canvas.add_actor(this.text1);
+        this.canvas.add_actor(this.text2);
+
+        this.setContent(this.canvas);
 
         // set decoration settings
 
@@ -56,9 +64,15 @@ MyDesklet.prototype = {
         // console log
         global.log("update SMG");
         // do the graph
+        // type of system variable to graph
         var type = this.type;
         // add text to label
-        this.text.set_text("Hello Desktop2 ".concat(type));
+        this.text1.set_text("Hello Desktop2 ".concat(type));
+        this.text2.set_text(type);
+        // positions text
+        this.text1.set_position(null, null);
+        this.text2.set_position(null, 50);
+
         // call this.update() in 5 seconds
         this.timeout = Mainloop.timeout_add_seconds(5, Lang.bind(this, this.update));
     },
