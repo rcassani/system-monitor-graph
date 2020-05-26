@@ -26,6 +26,8 @@ MyDesklet.prototype = {
         // initialize settings
         this.settings = new Settings.DeskletSettings(this, this.metadata["uuid"], desklet_id);
         this.settings.bindProperty(Settings.BindingDirection.IN, "type", "type", this.on_setting_changed);
+        this.settings.bindProperty(Settings.BindingDirection.IN, "refresh-interval", "refresh_interval", this.on_setting_changed);
+
 
         // initialize desklet GUI
         this.setupUI();
