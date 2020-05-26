@@ -12,4 +12,13 @@ These are some of the projects where I took inspiration for this project:
 * [Win10 Widgets](https://win10widgets.com/)
 
 
+# Resources
+* [Computing CPU usage](https://rosettacode.org/wiki/Linux_CPU_utilization)
+* [Launching sequential processes from desklet](https://stackoverflow.com/questions/61147229/multiple-arguments-in-gio-subprocess)
 
+
+# Notes:
+* `/usr/bin/free` for RAM
+* `/bin/df` for disk space
+
+#TODO: add dependencies
