@@ -203,6 +203,10 @@ MyDesklet.prototype = {
         Mainloop.source_remove(this.timeout);
     },
 
+    on_desklet_added_to_desktop: function(){
+        this.actor.set_position(0, 0);
+    },
+
     get_cpu_times: function(){
         // launching sequential processes
         // https://stackoverflow.com/questions/61147229/multiple-arguments-in-gio-subprocess
