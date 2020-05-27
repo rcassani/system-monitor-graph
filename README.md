@@ -13,8 +13,18 @@ These are some of the projects where I took inspiration for this project:
 
 
 # Resources
+* [cinnamon-spices-desklets](https://github.com/linuxmint/cinnamon-spices-desklets)
+* [JavaScript Tutorial](https://www.w3schools.com/js/default.asp)
+* [CJS: JavaScript bindings for Cinnamon](https://github.com/linuxmint/cjs)
+* [CJS the importer](http://lira.epac.to:8080/doc/cinnamon/cinnamon-tutorials/importer.html)
+* [Applet, desklet and extension settings reference](https://projects.linuxmint.com/reference/git/cinnamon-tutorials/xlet-settings.html) and [here](https://projects.linuxmint.com/reference/git/cinnamon-tutorials/xlet-settings-ref.html)
+* [GJS: JavaScript Bindings for GNOME](https://gitlab.gnome.org/GNOME/gjs/blob/master/doc/Home.md) and [here](https://gjs-docs.gnome.org/)
+* [GJS examples](https://github.com/optimisme/gjs-examples)
+* [Clutter API](https://gjs-docs.gnome.org/clutter4~4_api/)
 * [Computing CPU usage](https://rosettacode.org/wiki/Linux_CPU_utilization)
 * [Launching sequential processes from desklet](https://stackoverflow.com/questions/61147229/multiple-arguments-in-gio-subprocess)
+* On [Cinnamon.get_file_contents_utf8_sync()](https://github.com/linuxmint/cinnamon-spices-desklets/issues/428)
+* Default [`desklet.js` in Cinnamon](https://github.com/linuxmint/cinnamon/blob/master/js/ui/desklet.js)
 
 
 # Notes:
