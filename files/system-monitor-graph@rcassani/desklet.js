@@ -6,9 +6,6 @@ const Clutter = imports.gi.Clutter;
 const Cinnamon = imports.gi.Cinnamon;
 const Gio = imports.gi.Gio;
 const Cairo = imports.cairo;
-
-
-
 const St = imports.gi.St;
 
 function MyDesklet(metadata, desklet_id) {
@@ -30,28 +27,19 @@ MyDesklet.prototype = {
         this.settings.bindProperty(Settings.BindingDirection.IN, "type", "type", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "refresh-interval", "refresh_interval", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "line-color", "line_color", this.on_setting_changed);
-
         // initialize desklet GUI
         this.setupUI();
     },
 
     setupUI: function(){
-        // initialize size
-
+        // initialize this.canvas
         this.canvas = new Clutter.Actor();
         this.canvas.remove_all_children();
         this.text1 = new St.Label();
-		    this.text2 = new St.Label();
-
+        this.text2 = new St.Label();
         this.canvas.add_actor(this.text1);
         this.canvas.add_actor(this.text2);
-
-        this.n_values = 30 + 1;
-        this.values = new Array(this.n_values).fill(0.0);
-
         this.setContent(this.canvas);
-
-        // set decoration settings
 
         // flag to indicate the first loop of the Desklet
         this.first_run = true;
@@ -60,6 +48,14 @@ MyDesklet.prototype = {
     },
 
     update: function() {
+        // time settings for graph
+        if (this.first_run){
+            this.duration = 30;
+            this.refresh_interval = 1;
+            this.n_values = Math.floor(this.duration / this.refresh_interval)  + 1;
+            this.values = new Array(this.n_values).fill(0.0);
+        }
+
         // Desklet proportions
         let unit_size = 15;  // pixels
         var margin_up = 3 * unit_size;
@@ -67,20 +63,16 @@ MyDesklet.prototype = {
         var graph_h =  4 * unit_size;
         let desklet_w = graph_w + (2 * unit_size);
         let desklet_h = graph_h + (4 * unit_size);
-
- //       let desklet_w = 330;     // pixels
-   //     let desklet_h = 120;     // pixels
-     //   let size_margin = 15;    // pixels
-
-       // var graph_w = desklet_w - (2 * size_margin);
-        //var graph_h = desklet_h - (4 * size_margin);
-
-        let graph_step = 2 * unit_size / 3; // this depends on the interval, and refresh
+        var v_midlines = 4;
+        var h_midlines = 5;
         let text1_size = 5 * unit_size / 3;
         let text2_size = 4 * unit_size / 3;
+        var radius = 2 * unit_size / 3;;
+        var degrees = Math.PI / 180.0;
 
         let n_values = this.n_values;
         let values = this.values;
+        let graph_step = graph_w / (n_values -1);
 
         var value = 0.0;
         var text1 = '';
@@ -88,7 +80,6 @@ MyDesklet.prototype = {
         var line_r;
         var line_g;
         var line_b;
-
 
         // current values
         switch (this.type) {
@@ -143,15 +134,13 @@ MyDesklet.prototype = {
             ctx.setLineWidth(2);
 
             // desklet background
-            let radius = 10;
-            let degrees = Math.PI / 180.0;
+            ctx.setSourceRGBA(0.2, 0.2, 0.2, 1);
             ctx.newSubPath();
             ctx.arc(desklet_w - radius, radius, radius, -90 * degrees, 0 * degrees);
             ctx.arc(desklet_w - radius, desklet_h - radius, radius, 0 * degrees, 90 * degrees);
             ctx.arc(radius, desklet_h - radius, radius, 90 * degrees, 180 * degrees);
             ctx.arc(radius, radius, radius, 180 * degrees, 270 * degrees);
             ctx.closePath();
-            ctx.setSourceRGB(0.2, 0.2, 0.2);
             ctx.fill();
 
             // graph border
@@ -159,22 +148,26 @@ MyDesklet.prototype = {
             ctx.rectangle(unit_size, margin_up, graph_w, graph_h);
             ctx.stroke();
 
-            // graph midlines
-            ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
-            let n_midlines = 4;
-            for (let i = 1; i<n_midlines; i++){
-              ctx.moveTo(unit_size, margin_up + i * (graph_h / n_midlines));
-              ctx.relLineTo(graph_w, 0);
-              ctx.moveTo((i * graph_w / n_midlines) + unit_size, margin_up);
-              ctx.relLineTo(0, graph_h);
-              ctx.stroke();
+            // graph V and H midlines
+            ctx.setSourceRGBA(0.5, 0.5, 0.5, 1);
+            ctx.setLineWidth(0.5);
+            for (let i = 1; i<v_midlines; i++){
+                ctx.moveTo((i * graph_w / v_midlines) + unit_size, margin_up);
+                ctx.relLineTo(0, graph_h);
+                ctx.stroke();
+            }
+            for (let i = 1; i<h_midlines; i++){
+                ctx.moveTo(unit_size, margin_up + i * (graph_h / h_midlines));
+                ctx.relLineTo(graph_w, 0);
+                ctx.stroke();
             }
 
-            // timeseries
+            // timeseries and area
+            ctx.setLineWidth(2);
             ctx.setSourceRGBA(line_r, line_g, line_b, 1);
             ctx.moveTo(unit_size, margin_up + graph_h - (values[0] * graph_h));
             for (let i = 1; i<n_values; i++){
-              ctx.lineTo(unit_size + (i * graph_step), margin_up + graph_h - (values[i] * graph_h));
+                ctx.lineTo(unit_size + (i * graph_step), margin_up + graph_h - (values[i] * graph_h));
             }
             ctx.strokePreserve();
             ctx.lineTo(unit_size + graph_w, margin_up + graph_h);
@@ -210,10 +203,6 @@ MyDesklet.prototype = {
 
     on_desklet_removed: function() {
         Mainloop.source_remove(this.timeout);
-    },
-
-    on_desklet_added_to_desktop: function(){
-        this.actor.set_position(100, 100);
     },
 
     get_cpu_times: function(){
