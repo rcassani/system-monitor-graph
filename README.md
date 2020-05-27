@@ -25,7 +25,8 @@ These are some of the projects where I took inspiration for this project:
 * [Launching sequential processes from desklet](https://stackoverflow.com/questions/61147229/multiple-arguments-in-gio-subprocess)
 * On [Cinnamon.get_file_contents_utf8_sync()](https://github.com/linuxmint/cinnamon-spices-desklets/issues/428)
 * Default [`desklet.js` in Cinnamon](https://github.com/linuxmint/cinnamon/blob/master/js/ui/desklet.js)
-
+* [Manual alpha blending](https://stackoverflow.com/questions/746899/how-to-calculate-an-rgb-colour-by-specifying-an-alpha-blending-amount)
+* [Cairo documentation](https://www.cairographics.org/documentation/)
 
 # Notes:
 * `/usr/bin/free` for RAM
