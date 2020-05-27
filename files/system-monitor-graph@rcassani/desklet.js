@@ -97,14 +97,11 @@ MyDesklet.prototype = {
         var text1 = '';
         var text2 = '';
         var line_colors;
-        var line_g;
-        var line_b;
 
         // current values
         switch (this.type) {
           case "cpu":
               // CPU usage https://rosettacode.org/wiki/Linux_CPU_utilization
-              text1 = 'CPU';
               let cpu_values = this.get_cpu_times();
               let cpu_tot = cpu_values[0];
               let cpu_idl = cpu_values[1];
@@ -112,16 +109,27 @@ MyDesklet.prototype = {
               this.cpu_tot = cpu_tot;
               this.cpu_idl = cpu_idl;
               value = cpu_use / 100;
+              text1 = "CPU";
               text2 = Math.round(cpu_use).toString() + "%";
-              line_colors = [1, 1, 1];
+              line_colors = [0.09, 0.57, 0.81];
               break;
 
           case "ram":
-              value = 12;
-              this.text1.set_text(type);
-              this.text2.set_text(value.toString());
-              global.log("update ram");
+              let ram_values = this.get_ram_values();
+              let ram_use = 100 * ram_values[1] / ram_values[0];
+              value = ram_use / 100;
+              text1 = "RAM";
+              text2 = Math.round(ram_use).toString() + "%   "
+                    + ram_values[1].toFixed(1) + "/" + ram_values[0].toFixed(1)
+                    + " GB";
+              line_colors = [0.2, 0.8, 0.2];
               break;
+
+          case "gpu-nvidia":
+              line_colors = [0.2, 0.8, 0.2];
+              break;
+
+
         }
 
         // concatenate new value
@@ -240,6 +248,22 @@ MyDesklet.prototype = {
           cpu_tot += parseFloat(cpu_values[i])
         }
         return [cpu_tot, cpu_idl];
+    },
+
+    get_ram_values: function() {
+        let subprocess = new Gio.Subprocess({
+            argv: ['/bin/sh', '-c', '/usr/bin/free | grep Mem: -w'],
+            flags: Gio.SubprocessFlags.STDOUT_PIPE,
+        });
+        subprocess.init(null);
+        let gb = 1048576;
+        let [, out] = subprocess.communicate_utf8(null, null); // get full output from stdout
+        let ram_line = out.split(/\r?\n/)[0];   // get only one line
+        let ram_values = ram_line.split(/\s+/); // split by space
+        let ram_tot = parseFloat(ram_values[1]) / gb;
+        let ram_usd = parseFloat(ram_values[2]) / gb;
+        global.log(ram_values[1] + " " + ram_values[2]);
+        return [ram_tot, ram_usd];
     },
 
     parse_rgba_seetings: function(color_str) {
