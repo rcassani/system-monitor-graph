@@ -60,15 +60,24 @@ MyDesklet.prototype = {
     },
 
     update: function() {
-        // size Desklet
-        let desklet_w = 330;     // pixels
-        let desklet_h = 120;     // pixels
-        let size_margin = 15;    // pixels
-        var graph_w = desklet_w - (2 * size_margin);
-        var graph_h = desklet_h - (4 * size_margin);
-        let graph_step = 10;
-        let text1_size = 26;
-        let text2_size = 16;
+        // Desklet proportions
+        let unit_size = 15;  // pixels
+        var margin_up = 3 * unit_size;
+        var graph_w = 20 * unit_size;
+        var graph_h =  4 * unit_size;
+        let desklet_w = graph_w + (2 * unit_size);
+        let desklet_h = graph_h + (4 * unit_size);
+
+ //       let desklet_w = 330;     // pixels
+   //     let desklet_h = 120;     // pixels
+     //   let size_margin = 15;    // pixels
+
+       // var graph_w = desklet_w - (2 * size_margin);
+        //var graph_h = desklet_h - (4 * size_margin);
+
+        let graph_step = 2 * unit_size / 3; // this depends on the interval, and refresh
+        let text1_size = 5 * unit_size / 3;
+        let text2_size = 4 * unit_size / 3;
 
         let n_values = this.n_values;
         let values = this.values;
@@ -147,29 +156,29 @@ MyDesklet.prototype = {
 
             // graph border
             ctx.setSourceRGBA(line_r, line_g, line_b, 1);
-            ctx.rectangle(size_margin, size_margin*3, graph_w, graph_h);
+            ctx.rectangle(unit_size, margin_up, graph_w, graph_h);
             ctx.stroke();
 
             // graph midlines
             ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
             let n_midlines = 4;
             for (let i = 1; i<n_midlines; i++){
-              ctx.moveTo(size_margin, (size_margin * 3) + i * (graph_h / n_midlines));
+              ctx.moveTo(unit_size, margin_up + i * (graph_h / n_midlines));
               ctx.relLineTo(graph_w, 0);
-              ctx.moveTo((i * (graph_w / n_midlines)) + size_margin, size_margin * 3 );
+              ctx.moveTo((i * graph_w / n_midlines) + unit_size, margin_up);
               ctx.relLineTo(0, graph_h);
               ctx.stroke();
             }
 
             // timeseries
             ctx.setSourceRGBA(line_r, line_g, line_b, 1);
-            ctx.moveTo(size_margin, (size_margin * 3) + graph_h - (values[0] * graph_h));
+            ctx.moveTo(unit_size, margin_up + graph_h - (values[0] * graph_h));
             for (let i = 1; i<n_values; i++){
-              ctx.lineTo(size_margin + (i * graph_step), (size_margin * 3) + graph_h - (values[i] * graph_h));
+              ctx.lineTo(unit_size + (i * graph_step), margin_up + graph_h - (values[i] * graph_h));
             }
             ctx.strokePreserve();
-            ctx.lineTo(size_margin + graph_w, (size_margin * 3) + graph_h);
-            ctx.lineTo(size_margin, (size_margin * 3) + graph_h);
+            ctx.lineTo(unit_size + graph_w, margin_up + graph_h);
+            ctx.lineTo(unit_size, margin_up + graph_h);
             ctx.closePath();
             ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
             ctx.fill();
@@ -178,10 +187,10 @@ MyDesklet.prototype = {
         });
 
         // text position and content
-        this.text1.set_position(size_margin, 10);
+        this.text1.set_position(unit_size, 2 * unit_size / 3);
         this.text1.set_text(text1);
         this.text1.style = "font-size: " + text1_size + "px;";
-        this.text2.set_position(80, 17);
+        this.text2.set_position(5 * unit_size, unit_size);
         this.text2.set_text(text2);
         this.text2.style = "font-size: " + text2_size + "px;";
 
@@ -204,7 +213,7 @@ MyDesklet.prototype = {
     },
 
     on_desklet_added_to_desktop: function(){
-        this.actor.set_position(0, 0);
+        this.actor.set_position(100, 100);
     },
 
     get_cpu_times: function(){
