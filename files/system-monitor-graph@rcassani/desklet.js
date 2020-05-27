@@ -5,7 +5,7 @@ const Lang = imports.lang;
 const Clutter = imports.gi.Clutter;
 const Cinnamon = imports.gi.Cinnamon;
 const Gio = imports.gi.Gio;
-
+const Cairo = imports.cairo;
 
 
 
@@ -29,7 +29,7 @@ MyDesklet.prototype = {
         this.settings = new Settings.DeskletSettings(this, this.metadata["uuid"], desklet_id);
         this.settings.bindProperty(Settings.BindingDirection.IN, "type", "type", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "refresh-interval", "refresh_interval", this.on_setting_changed);
-
+        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color", "line_color", this.on_setting_changed);
 
         // initialize desklet GUI
         this.setupUI();
@@ -46,6 +46,9 @@ MyDesklet.prototype = {
         this.canvas.add_actor(this.text1);
         this.canvas.add_actor(this.text2);
 
+        this.n_values = 30 + 1;
+        this.values = new Array(this.n_values).fill(0.0);
+
         this.setContent(this.canvas);
 
         // set decoration settings
@@ -57,22 +60,31 @@ MyDesklet.prototype = {
     },
 
     update: function() {
-        // type of system variable to graph
-        var type = this.type;
-        var value = 0.0;
-        // do the graph
+        // size Desklet
+        let desklet_w = 330;     // pixels
+        let desklet_h = 120;     // pixels
+        let size_margin = 15;    // pixels
+        let graph_w = desklet_w - (2 * size_margin);
+        let graph_h = desklet_h - (4 * size_margin);
+        let graph_step = 10;
+        let text1_size = 26;
+        let text2_size = 16;
+        let n_values = this.n_values;
+        let values = this.values;
 
-        // text positions
-        this.text1.set_position(null, null);
-        this.text2.set_position(null, 50);
+
+        var value = 0.0;
+        var text1 = '';
+        var text2 = '';
 
         // current values
-        switch (type) {
+        switch (this.type) {
           case "cpu":
               // CPU usage https://rosettacode.org/wiki/Linux_CPU_utilization
-              var cpu_values = this.get_cpu_times();
-              var cpu_tot = cpu_values[0];
-              var cpu_idl = cpu_values[1];
+              text1 = 'CPU';
+              let cpu_values = this.get_cpu_times();
+              let cpu_tot = cpu_values[0];
+              let cpu_idl = cpu_values[1];
 
               if (this.first_run){
                   this.first_run = false;
@@ -80,12 +92,11 @@ MyDesklet.prototype = {
                   this.cpu_idl = cpu_idl;
               }
               else {
-                  var cpu_use = 100 * (1 - (cpu_idl - this.cpu_idl) / (cpu_tot - this.cpu_tot));
+                  let cpu_use = 100 * (1 - (cpu_idl - this.cpu_idl) / (cpu_tot - this.cpu_tot));
                   this.cpu_tot = cpu_tot;
                   this.cpu_idl = cpu_idl;
-                  this.text1.set_text(type);
-                  this.text2.set_text(Math.round(cpu_use).toString());
-                  // update in graph
+                  value = cpu_use / 100;
+                  text2 = Math.round(cpu_use).toString() + "%";
               }
               break;
 
@@ -97,8 +108,72 @@ MyDesklet.prototype = {
               break;
         }
 
+        // concatenate new value
+        values.push(value);
+        values.shift();
+        this.values = values;
+
+        // line_color
+        let line_colors = this.line_color.match(/\((.*?)\)/)[1].split(","); // get contents inside brackets: "rgb(...)"
+        var line_r = parseInt(line_colors[0])/255;
+        var line_g = parseInt(line_colors[1])/255;
+        var line_b = parseInt(line_colors[2])/255;
+
+        let canvas = new Clutter.Canvas();
+        canvas.set_size(desklet_w, desklet_h);
+        canvas.connect('draw', function (canvas, ctx, desklet_w, desklet_h) {
+            ctx.save();
+            ctx.setOperator(Cairo.Operator.CLEAR);
+            ctx.paint();
+            ctx.restore();
+            ctx.setOperator(Cairo.Operator.OVER);
+            ctx.setSourceRGBA(line_r, line_g, line_b, 1);
+            ctx.setLineWidth(2);
+
+            // graph border
+            ctx.rectangle(size_margin, size_margin*3, 300, 60);
+            ctx.stroke();
+            // graph midlines
+            ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
+            for (let i = 1; i<4; i++){
+              ctx.moveTo(size_margin, (size_margin * 3) + i * (graph_h / 4));
+              ctx.relLineTo(graph_w, 0);
+              ctx.moveTo((i * (graph_w / 4)) + size_margin, size_margin * 3 );
+              ctx.relLineTo(0, graph_h);
+              ctx.stroke();
+            }
+
+            // timeseries
+            ctx.setSourceRGBA(line_r, line_g, line_b, 1);
+            ctx.moveTo(size_margin, (size_margin * 3) + graph_h - (values[0] * graph_h));
+            for (let i = 1; i<n_values; i++){
+              ctx.lineTo(size_margin + (i * graph_step), (size_margin * 3) + graph_h - (values[i] * graph_h));
+            }
+            ctx.strokePreserve();
+            ctx.lineTo(size_margin + graph_w, (size_margin * 3) + graph_h);
+            ctx.lineTo(size_margin, (size_margin * 3) + graph_h);
+            ctx.closePath();
+            ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
+            ctx.fill();
 
 
+            return false;
+        });
+
+        // text position and content
+        this.text1.set_position(size_margin, 10);
+        this.text1.set_text(text1);
+        this.text1.style = "font-size: " + text1_size + "px;";
+
+
+        this.text2.set_position(80, 17);
+        this.text2.set_text(text2);
+        this.text2.style = "font-size: " + text2_size + "px;";
+
+        // update canvas
+        canvas.invalidate();
+        this.canvas.set_content(canvas);
+        this.canvas.set_size(desklet_w, desklet_h);
         // call this.update() every in refresh_interval seconds
         this.timeout = Mainloop.timeout_add_seconds(this.refresh_interval, Lang.bind(this, this.update));
     },
