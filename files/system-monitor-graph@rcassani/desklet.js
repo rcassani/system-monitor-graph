@@ -64,18 +64,22 @@ MyDesklet.prototype = {
         let desklet_w = 330;     // pixels
         let desklet_h = 120;     // pixels
         let size_margin = 15;    // pixels
-        let graph_w = desklet_w - (2 * size_margin);
-        let graph_h = desklet_h - (4 * size_margin);
+        var graph_w = desklet_w - (2 * size_margin);
+        var graph_h = desklet_h - (4 * size_margin);
         let graph_step = 10;
         let text1_size = 26;
         let text2_size = 16;
+
         let n_values = this.n_values;
         let values = this.values;
-
 
         var value = 0.0;
         var text1 = '';
         var text2 = '';
+        var line_r;
+        var line_g;
+        var line_b;
+
 
         // current values
         switch (this.type) {
@@ -115,9 +119,9 @@ MyDesklet.prototype = {
 
         // line_color
         let line_colors = this.line_color.match(/\((.*?)\)/)[1].split(","); // get contents inside brackets: "rgb(...)"
-        var line_r = parseInt(line_colors[0])/255;
-        var line_g = parseInt(line_colors[1])/255;
-        var line_b = parseInt(line_colors[2])/255;
+        line_r = parseInt(line_colors[0])/255;
+        line_g = parseInt(line_colors[1])/255;
+        line_b = parseInt(line_colors[2])/255;
 
         let canvas = new Clutter.Canvas();
         canvas.set_size(desklet_w, desklet_h);
@@ -127,18 +131,32 @@ MyDesklet.prototype = {
             ctx.paint();
             ctx.restore();
             ctx.setOperator(Cairo.Operator.OVER);
-            ctx.setSourceRGBA(line_r, line_g, line_b, 1);
             ctx.setLineWidth(2);
 
+            // desklet background
+            let radius = 10;
+            let degrees = Math.PI / 180.0;
+            ctx.newSubPath();
+            ctx.arc(desklet_w - radius, radius, radius, -90 * degrees, 0 * degrees);
+            ctx.arc(desklet_w - radius, desklet_h - radius, radius, 0 * degrees, 90 * degrees);
+            ctx.arc(radius, desklet_h - radius, radius, 90 * degrees, 180 * degrees);
+            ctx.arc(radius, radius, radius, 180 * degrees, 270 * degrees);
+            ctx.closePath();
+            ctx.setSourceRGB(0.2, 0.2, 0.2);
+            ctx.fill();
+
             // graph border
-            ctx.rectangle(size_margin, size_margin*3, 300, 60);
+            ctx.setSourceRGBA(line_r, line_g, line_b, 1);
+            ctx.rectangle(size_margin, size_margin*3, graph_w, graph_h);
             ctx.stroke();
+
             // graph midlines
             ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
-            for (let i = 1; i<4; i++){
-              ctx.moveTo(size_margin, (size_margin * 3) + i * (graph_h / 4));
+            let n_midlines = 4;
+            for (let i = 1; i<n_midlines; i++){
+              ctx.moveTo(size_margin, (size_margin * 3) + i * (graph_h / n_midlines));
               ctx.relLineTo(graph_w, 0);
-              ctx.moveTo((i * (graph_w / 4)) + size_margin, size_margin * 3 );
+              ctx.moveTo((i * (graph_w / n_midlines)) + size_margin, size_margin * 3 );
               ctx.relLineTo(0, graph_h);
               ctx.stroke();
             }
@@ -156,7 +174,6 @@ MyDesklet.prototype = {
             ctx.setSourceRGBA(line_r, line_g, line_b, 0.2);
             ctx.fill();
 
-
             return false;
         });
 
@@ -164,8 +181,6 @@ MyDesklet.prototype = {
         this.text1.set_position(size_margin, 10);
         this.text1.set_text(text1);
         this.text1.style = "font-size: " + text1_size + "px;";
-
-
         this.text2.set_position(80, 17);
         this.text2.set_text(text2);
         this.text2.style = "font-size: " + text2_size + "px;";
