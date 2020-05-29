@@ -29,7 +29,7 @@ These are some of the projects where I took inspiration for this project:
 * [Cairo documentation](https://www.cairographics.org/documentation/)
 
 # Notes:
-* `/usr/bin/free` for RAM
 * `/bin/df` for disk space
+* `iostat -px` for hdd usage
 
 #TODO: add dependencies
