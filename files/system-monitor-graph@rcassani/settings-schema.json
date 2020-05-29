@@ -15,8 +15,18 @@
         "tooltip": "Select the system variable to monitor.",
         "options" : {
             "CPU" : "cpu",
-            "RAM": "ram"
+            "RAM" : "ram",
+            "HHD" : "hdd"
         }
+    },
+    "filesystem": {
+        "type": "filechooser",
+        "default": "/",
+        "description": "Filesystem to monitor",
+        "tooltip": "Select the file system, which you want to monitor.",
+        "allow-none" : true,
+        "select-dir" : true,
+        "dependency": "type=hdd"
     },
     "duration": {
         "type": "combobox",
@@ -63,17 +73,23 @@
         "default": "rgba(255,255,255,1)",
         "description": "Text color"
     },
-    "custom-line-color": {
-        "type": "checkbox",
-        "default": false,
-        "description": "Use a custom line color",
-        "value": false
+    "line-color-cpu": {
+        "type": "colorchooser",
+        "default": "rgba(23,147,208,1.0)",
+        "description": "Line color CPU",
+        "dependency": "type=cpu"
     },
-    "line-color": {
+    "line-color-ram": {
         "type": "colorchooser",
         "default": "rgba(137,190,67,1.0)",
-        "description": "Line color",
-        "dependency": "custom-line-color"
+        "description": "Line color RAM",
+        "dependency": "type=ram"
+    },
+    "line-color-hdd": {
+        "type": "colorchooser",
+        "default": "rgba(197,86,33,1.0)",
+        "description": "Line color HDD",
+        "dependency": "type=hdd"
     },
     "midline-color": {
         "type": "colorchooser",

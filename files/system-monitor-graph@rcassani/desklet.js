@@ -28,13 +28,18 @@ MyDesklet.prototype = {
         this.settings.bindProperty(Settings.BindingDirection.IN, "refresh-interval", "refresh_interval", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "duration", "duration", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "custom-line-color", "custom_line_color", this.on_setting_changed);
-        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color", "line_color", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "background-color", "background_color", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "h-midlines", "h_midlines", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "v-midlines", "v_midlines", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "scale-size", "scale_size", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "midline-color", "midline_color", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "text-color", "text_color", this.on_setting_changed);
+        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-ram", "line_color_ram", this.on_setting_changed);
+        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-cpu", "line_color_cpu", this.on_setting_changed);
+
+
+
+
 
         // initialize desklet GUI
         this.setupUI();
@@ -71,6 +76,17 @@ MyDesklet.prototype = {
             let cpu_values = this.get_cpu_times();
             this.cpu_tot = cpu_values[0];
             this.cpu_idl = cpu_values[1];
+            // set colors
+            switch (this.type) {
+              case "cpu":
+                  this.line_color = this.line_color_cpu;
+                  break;
+              case "ram":
+                  this.line_color = this.line_color_ram;
+                  break;
+              case "hdd":
+                  this.line_color = this.line_color_hdd;
+            }
             this.first_run = false;
         }
 
@@ -96,7 +112,7 @@ MyDesklet.prototype = {
         var value = 0.0;
         var text1 = '';
         var text2 = '';
-        var line_colors;
+        var line_colors = this.parse_rgba_seetings(this.line_color);
 
         // current values
         switch (this.type) {
@@ -111,7 +127,6 @@ MyDesklet.prototype = {
               value = cpu_use / 100;
               text1 = "CPU";
               text2 = Math.round(cpu_use).toString() + "%";
-              line_colors = [0.09, 0.57, 0.81];
               break;
 
           case "ram":
@@ -136,11 +151,6 @@ MyDesklet.prototype = {
         values.push(value);
         values.shift();
         this.values = values;
-
-        // overrides the line_color if custom_line_color
-        if (this.custom_line_color){
-            line_colors = this.parse_rgba_seetings(this.line_color);
-        }
 
         var background_colors = this.parse_rgba_seetings(this.background_color);
         var midline_colors = this.parse_rgba_seetings(this.midline_color);
