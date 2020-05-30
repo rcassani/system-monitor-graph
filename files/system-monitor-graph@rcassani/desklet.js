@@ -7,6 +7,10 @@ const Cinnamon = imports.gi.Cinnamon;
 const Gio = imports.gi.Gio;
 const Cairo = imports.cairo;
 const St = imports.gi.St;
+const Util = imports.misc.util;
+
+const UUID = "system-monitor-graph@rcassani";
+const DESKLET_PATH = imports.ui.deskletManager.deskletMeta[UUID].path;
 
 function MyDesklet(metadata, desklet_id) {
   this._init(metadata, desklet_id);
@@ -25,17 +29,18 @@ MyDesklet.prototype = {
         // initialize settings
         this.settings = new Settings.DeskletSettings(this, this.metadata["uuid"], desklet_id);
         this.settings.bindProperty(Settings.BindingDirection.IN, "type", "type", this.on_setting_changed);
+        this.settings.bindProperty(Settings.BindingDirection.IN, "filesystem", "filesystem", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "refresh-interval", "refresh_interval", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "duration", "duration", this.on_setting_changed);
-        this.settings.bindProperty(Settings.BindingDirection.IN, "custom-line-color", "custom_line_color", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "background-color", "background_color", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "h-midlines", "h_midlines", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "v-midlines", "v_midlines", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "scale-size", "scale_size", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "midline-color", "midline_color", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "text-color", "text_color", this.on_setting_changed);
-        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-ram", "line_color_ram", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-cpu", "line_color_cpu", this.on_setting_changed);
+        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-ram", "line_color_ram", this.on_setting_changed);
+        this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-hdd", "line_color_hdd", this.on_setting_changed);
 
 
 
@@ -62,7 +67,7 @@ MyDesklet.prototype = {
     },
 
     update: function() {
-        //
+        // monitors a given variable and plot its graph
         this.update_draw();
         // call this.update() every in refresh_interval seconds
         this.timeout = Mainloop.timeout_add_seconds(this.refresh_interval, Lang.bind(this, this.update));
@@ -135,16 +140,22 @@ MyDesklet.prototype = {
               value = ram_use / 100;
               text1 = "RAM";
               text2 = Math.round(ram_use).toString() + "%   "
-                    + ram_values[1].toFixed(1) + "/" + ram_values[0].toFixed(1)
+                    + ram_values[1].toFixed(1) + " / " + ram_values[0].toFixed(1)
                     + " GB";
-              line_colors = [0.2, 0.8, 0.2];
               break;
 
-          case "gpu-nvidia":
-              line_colors = [0.2, 0.8, 0.2];
+          case "hdd":
+              let dir_path = decodeURIComponent(this.filesystem.replace("file://", "").trim());
+              if(dir_path == null || dir_path == "") dir_path = "/";
+              let hdd_values = this.get_hdd_values(dir_path);
+              let hdd_use = hdd_values[0]; //already in %
+              value = hdd_use / 100;
+              text1 = "HDD";
+              text2 = Math.round(hdd_use).toString() + "%   "
+                    + hdd_values[2].toFixed(1) + " GB free of "
+                    + hdd_values[1].toFixed(1) + " GB";
+
               break;
-
-
         }
 
         // concatenate new value
@@ -258,6 +269,12 @@ MyDesklet.prototype = {
           cpu_tot += parseFloat(cpu_values[i])
         }
         return [cpu_tot, cpu_idl];
+
+
+        // Util.spawn_async(["/bin/bash", "-c", "timeout -k " + this.timeout + " " + this.timeout + " " + command.command + " || echo \"Timeout or error occured.\""], Lang.bind(this, this._setNewCommandResult, command));
+        //Util.spawn_async(["/bin/bash", "-c", "timeout -k 2 2 cat /proc/stat | grep cpu -w"], Lang.bind(this, this._setNewCommandResult, command));
+        return [cpu_tot, cpu_idl];
+
     },
 
     get_ram_values: function() {
@@ -266,14 +283,43 @@ MyDesklet.prototype = {
             flags: Gio.SubprocessFlags.STDOUT_PIPE,
         });
         subprocess.init(null);
-        let gb = 1048576;
+        let gb = 1048576; // 1 GB = 1,048,576 kB
         let [, out] = subprocess.communicate_utf8(null, null); // get full output from stdout
         let ram_line = out.split(/\r?\n/)[0];   // get only one line
         let ram_values = ram_line.split(/\s+/); // split by space
         let ram_tot = parseFloat(ram_values[1]) / gb;
         let ram_usd = parseFloat(ram_values[2]) / gb;
-        global.log(ram_values[1] + " " + ram_values[2]);
         return [ram_tot, ram_usd];
+    },
+
+    get_hdd_values: function(dir_path) {
+        let subprocess = new Gio.Subprocess({
+            argv: ['/bin/sh', '-c', '/bin/df ' + dir_path + ' | grep Filesystem -w -A1'],
+            flags: Gio.SubprocessFlags.STDOUT_PIPE,
+        });
+        subprocess.init(null);
+        let gb = 1048576; // 1 GB = 1,048,576 kB
+        let [, out] = subprocess.communicate_utf8(null, null); // get full output from stdout
+        let df_line = out.split(/\r?\n/)[1];   // get only one line
+        let df_values = df_line.split(/\s+/); // split by space
+        // values for partition space
+        let hdd_tot = (parseFloat(df_values[3]) + parseFloat(df_values[2]) ) / gb;
+        let hdd_fre = parseFloat(df_values[3]) / gb;
+        // utilization of partition
+        let fs = df_values[0];
+        let subprocess2 = new Gio.Subprocess({
+            argv: ['/bin/sh', '-c', 'iostat ' + fs + ' -ydx 1 1 | grep Device -w -A1'],
+            flags: Gio.SubprocessFlags.STDOUT_PIPE,
+        });
+        subprocess2.init(null);
+        let [, out2] = subprocess2.communicate_utf8(null, null); // get full output from stdout
+        global.log(out2)
+        let iostat_line = out2.split(/\r?\n/)[1];   // get only one line
+        let iostat_values = iostat_line.split(/\s+/); // split by space
+        let hdd_use = parseFloat(iostat_values[iostat_values.length-1]);
+        //let hdd_use = 10;
+        //global.log(hdd_use)
+        return [hdd_use, hdd_tot, hdd_fre];
     },
 
     parse_rgba_seetings: function(color_str) {
@@ -282,9 +328,7 @@ MyDesklet.prototype = {
         let g = parseInt(colors[1])/255;
         let b = parseInt(colors[2])/255;
         let a = 1;
-        if (colors.length > 3){
-            a = colors[3];
-        }
+        if (colors.length > 3) a = colors[3];
         return [r, g, b, a];
     }
 
