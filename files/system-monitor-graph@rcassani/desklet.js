@@ -11,6 +11,8 @@ const Util = imports.misc.util;
 
 const UUID = "system-monitor-graph@rcassani";
 const DESKLET_PATH = imports.ui.deskletManager.deskletMeta[UUID].path;
+const GB_TO_KB = 1048576; // 1 GB = 1,048,576 kB
+
 
 function MyDesklet(metadata, desklet_id) {
   this._init(metadata, desklet_id);
@@ -122,7 +124,6 @@ MyDesklet.prototype = {
         // current values
         switch (this.type) {
           case "cpu":
-              // CPU usage https://rosettacode.org/wiki/Linux_CPU_utilization
               let cpu_values = this.get_cpu_times();
               let cpu_tot = cpu_values[0];
               let cpu_idl = cpu_values[1];
@@ -253,42 +254,28 @@ MyDesklet.prototype = {
     },
 
     get_cpu_times: function() {
-        // launching sequential processes
-        // https://stackoverflow.com/questions/61147229/multiple-arguments-in-gio-subprocess
-        let subprocess = new Gio.Subprocess({
-            argv: ['/bin/sh', '-c', 'cat /proc/stat | grep cpu -w'],
-            flags: Gio.SubprocessFlags.STDOUT_PIPE,
-        });
-        subprocess.init(null);
-        let [, out] = subprocess.communicate_utf8(null, null); // get full output from stdout
-        let cpu_line = out.split(/\r?\n/)[0];   // get only one line
-        let cpu_values = cpu_line.split(/\s+/); // split by space
+        // https://rosettacode.org/wiki/Linux_CPU_utilization
+        let cpu_line = Cinnamon.get_file_contents_utf8_sync("/proc/stat").match(/cpu\s.+/)[0];
+        let cpu_values = cpu_line.split(/\s+/);
         let cpu_idl = parseFloat(cpu_values[4]);
         let cpu_tot = 0;
         for (let i = 1; i<10; i++){
           cpu_tot += parseFloat(cpu_values[i])
         }
         return [cpu_tot, cpu_idl];
-
-
-        // Util.spawn_async(["/bin/bash", "-c", "timeout -k " + this.timeout + " " + this.timeout + " " + command.command + " || echo \"Timeout or error occured.\""], Lang.bind(this, this._setNewCommandResult, command));
-        //Util.spawn_async(["/bin/bash", "-c", "timeout -k 2 2 cat /proc/stat | grep cpu -w"], Lang.bind(this, this._setNewCommandResult, command));
-        return [cpu_tot, cpu_idl];
-
     },
 
     get_ram_values: function() {
-        let subprocess = new Gio.Subprocess({
-            argv: ['/bin/sh', '-c', '/usr/bin/free | grep Mem: -w'],
-            flags: Gio.SubprocessFlags.STDOUT_PIPE,
-        });
-        subprocess.init(null);
-        let gb = 1048576; // 1 GB = 1,048,576 kB
-        let [, out] = subprocess.communicate_utf8(null, null); // get full output from stdout
-        let ram_line = out.split(/\r?\n/)[0];   // get only one line
-        let ram_values = ram_line.split(/\s+/); // split by space
-        let ram_tot = parseFloat(ram_values[1]) / gb;
-        let ram_usd = parseFloat(ram_values[2]) / gb;
+        // https://www.man7.org/linux/man-pages/man1/free.1.html
+        let mem_out = Cinnamon.get_file_contents_utf8_sync("/proc/meminfo");
+        let mem_tot = parseInt(mem_out.match(/(MemTotal):\D+(\d+)/)[2]);
+        let mem_usd = mem_tot - parseInt(mem_out.match(/(MemFree):\D+(\d+)/)[2])
+                             - parseInt(mem_out.match(/(Cached):\D+(\d+)/)[2])
+                             - parseInt(mem_out.match(/(Buffers):\D+(\d+)/)[2])
+                             - parseInt(mem_out.match(/(SReclaimable):\D+(\d+)/)[2]);
+
+        let ram_tot = mem_tot / GB_TO_KB;
+        let ram_usd = mem_usd / GB_TO_KB;
         return [ram_tot, ram_usd];
     },
 
