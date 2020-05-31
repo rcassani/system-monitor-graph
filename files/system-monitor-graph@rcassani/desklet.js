@@ -303,6 +303,7 @@ MyDesklet.prototype = {
     },
 
     get_hdd_use: function(fs) {
+      // https://stackoverflow.com/questions/4458183/how-the-util-of-iostat-is-computed
       let cpu_line = Cinnamon.get_file_contents_utf8_sync("/proc/stat").match(/cpu\s.+/)[0];
       let re = new RegExp(fs + '.+');
       let hdd_line = Cinnamon.get_file_contents_utf8_sync("/proc/diskstats").match(re)[0];
