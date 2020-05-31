@@ -82,6 +82,8 @@ MyDesklet.prototype = {
             this.values = new Array(this.n_values).fill(0.0);
             this.cpu_cpu_tot = 0;
             this.cpu_cpu_idl = 0;
+            this.hdd_cpu_tot = 0;
+            this.hdd_hdd_tot = 0;
             // set colors
             switch (this.type) {
               case "cpu":
@@ -143,12 +145,12 @@ MyDesklet.prototype = {
               let dir_path = decodeURIComponent(this.filesystem.replace("file://", "").trim());
               if(dir_path == null || dir_path == "") dir_path = "/";
               let hdd_values = this.get_hdd_values(dir_path);
-              let hdd_use = hdd_values[0]; //already in %
+              let hdd_use = Math.min(hdd_values[1], 100); //already in %
               value = hdd_use / 100;
-              text1 = "HDD";
+              text1 = hdd_values[0];
               text2 = Math.round(hdd_use).toString() + "%   "
-                    + hdd_values[2].toFixed(1) + " GB free of "
-                    + hdd_values[1].toFixed(1) + " GB";
+                    + hdd_values[3].toFixed(1) + " GB free of "
+                    + hdd_values[2].toFixed(1) + " GB";
 
               break;
         }
@@ -278,32 +280,42 @@ MyDesklet.prototype = {
 
     get_hdd_values: function(dir_path) {
         let subprocess = new Gio.Subprocess({
-            argv: ['/bin/sh', '-c', '/bin/df ' + dir_path + ' | grep Filesystem -w -A1'],
+            argv: ['/bin/df', dir_path],
             flags: Gio.SubprocessFlags.STDOUT_PIPE,
         });
         subprocess.init(null);
-        let gb = 1048576; // 1 GB = 1,048,576 kB
         let [, out] = subprocess.communicate_utf8(null, null); // get full output from stdout
-        let df_line = out.split(/\r?\n/)[1];   // get only one line
+        let df_line = out.match(/.+/g)[1];
         let df_values = df_line.split(/\s+/); // split by space
         // values for partition space
-        let hdd_tot = (parseFloat(df_values[3]) + parseFloat(df_values[2]) ) / gb;
-        let hdd_fre = parseFloat(df_values[3]) / gb;
+        let hdd_tot = (parseFloat(df_values[3]) + parseFloat(df_values[2]) ) / GB_TO_KB;
+        let hdd_fre = parseFloat(df_values[3]) / GB_TO_KB;
         // utilization of partition
-        let fs = df_values[0];
-        let subprocess2 = new Gio.Subprocess({
-            argv: ['/bin/sh', '-c', 'iostat ' + fs + ' -ydx 1 1 | grep Device -w -A1'],
-            flags: Gio.SubprocessFlags.STDOUT_PIPE,
-        });
-        subprocess2.init(null);
-        let [, out2] = subprocess2.communicate_utf8(null, null); // get full output from stdout
-        global.log(out2)
-        let iostat_line = out2.split(/\r?\n/)[1];   // get only one line
-        let iostat_values = iostat_line.split(/\s+/); // split by space
-        let hdd_use = parseFloat(iostat_values[iostat_values.length-1]);
-        //let hdd_use = 10;
-        //global.log(hdd_use)
-        return [hdd_use, hdd_tot, hdd_fre];
+        let dev_fs = df_values[0];
+        let fs = dev_fs.split(/\/+/)[2];
+        let hdd_use = this.get_hdd_use(fs);
+        return [fs, hdd_use, hdd_tot, hdd_fre];
+    },
+
+    get_hdd_use: function(fs) {
+      let cpu_line = Cinnamon.get_file_contents_utf8_sync("/proc/stat").match(/cpu\s.+/)[0];
+      let re = new RegExp(fs + '.+');
+      let hdd_line = Cinnamon.get_file_contents_utf8_sync("/proc/diskstats").match(re)[0];
+      // get total CPU time
+      let cpu_values = cpu_line.split(/\s+/);
+      let hdd_cpu_tot = 0;
+      for (let i = 1; i<10; i++){
+        hdd_cpu_tot += parseFloat(cpu_values[i])
+      }
+      // get total of IO times
+      let hdd_hdd_tot = hdd_line.split(/\s+/)[10];
+      // update HHD use
+      let hdd_use = 100 * (hdd_hdd_tot - this.hdd_hdd_tot) / (hdd_cpu_tot - this.hdd_cpu_tot);
+      // update global values
+      this.hdd_cpu_tot = hdd_cpu_tot;
+      this.hdd_hdd_tot = hdd_hdd_tot;
+
+      return hdd_use;
     },
 
     parse_rgba_seetings: function(color_str) {
