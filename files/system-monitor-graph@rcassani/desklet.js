@@ -106,7 +106,7 @@ MyDesklet.prototype = {
         let desklet_h = graph_h + (4 * unit_size);
         var h_midlines = this.h_midlines;
         var v_midlines = this.v_midlines;
-        let text1_size = 5 * unit_size / 3;
+        let text1_size = 4 * unit_size / 3;
         let text2_size = 4 * unit_size / 3;
         let text3_size = 3 * unit_size / 3;
         var radius = 2 * unit_size / 3;;
@@ -224,15 +224,15 @@ MyDesklet.prototype = {
         });
 
         // text position and content
-        this.text1.set_position(unit_size, 2 * unit_size / 3);
+        this.text1.set_position(unit_size, unit_size);
         this.text1.set_text(text1);
         this.text1.style = "font-size: " + text1_size + "px;"
                          + "color: " + this.text_color + ";";
-        this.text2.set_position(6 * unit_size, unit_size);
+        this.text2.set_position(5 * unit_size, unit_size);
         this.text2.set_text(text2);
         this.text2.style = "font-size: " + text2_size + "px;"
                          + "color: " + this.text_color + ";";
-        this.text3.set_position(10 * unit_size, unit_size * 1.4);
+        this.text3.set_position(9.5 * unit_size, unit_size * 1.4);
         this.text3.set_text(text3);
         this.text3.style = "font-size: " + text3_size + "px;"
                          + "color: " + this.text_color + ";";
