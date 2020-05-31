@@ -80,9 +80,8 @@ MyDesklet.prototype = {
         if (this.first_run){
             this.n_values = Math.floor(this.duration / this.refresh_interval)  + 1;
             this.values = new Array(this.n_values).fill(0.0);
-            let cpu_values = this.get_cpu_times();
-            this.cpu_tot = cpu_values[0];
-            this.cpu_idl = cpu_values[1];
+            this.cpu_cpu_tot = 0;
+            this.cpu_cpu_idl = 0;
             // set colors
             switch (this.type) {
               case "cpu":
@@ -124,12 +123,7 @@ MyDesklet.prototype = {
         // current values
         switch (this.type) {
           case "cpu":
-              let cpu_values = this.get_cpu_times();
-              let cpu_tot = cpu_values[0];
-              let cpu_idl = cpu_values[1];
-              let cpu_use = 100 * (1 - (cpu_idl - this.cpu_idl) / (cpu_tot - this.cpu_tot));
-              this.cpu_tot = cpu_tot;
-              this.cpu_idl = cpu_idl;
+              let cpu_use = this.get_cpu_use();
               value = cpu_use / 100;
               text1 = "CPU";
               text2 = Math.round(cpu_use).toString() + "%";
@@ -253,7 +247,7 @@ MyDesklet.prototype = {
         Mainloop.source_remove(this.timeout);
     },
 
-    get_cpu_times: function() {
+    get_cpu_use: function() {
         // https://rosettacode.org/wiki/Linux_CPU_utilization
         let cpu_line = Cinnamon.get_file_contents_utf8_sync("/proc/stat").match(/cpu\s.+/)[0];
         let cpu_values = cpu_line.split(/\s+/);
@@ -262,7 +256,10 @@ MyDesklet.prototype = {
         for (let i = 1; i<10; i++){
           cpu_tot += parseFloat(cpu_values[i])
         }
-        return [cpu_tot, cpu_idl];
+        let cpu_use = 100 * (1 - (cpu_idl - this.cpu_cpu_idl) / (cpu_tot - this.cpu_cpu_tot));
+        this.cpu_cpu_tot = cpu_tot;
+        this.cpu_cpu_idl = cpu_idl;
+        return cpu_use;
     },
 
     get_ram_values: function() {
