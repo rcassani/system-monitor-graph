@@ -22,19 +22,19 @@ Each variable is calculated every `Refresh interval` seconds (Min. 1 s, Max. 60 
 
 ### Customizable visual elements
 <p align="center">
-<img src="settings.png" width="400" align="middle"><br>
+<img src="settings.png" width="700" align="middle"><br>
 Settings for one instance of the system monitor graph Desklet.
 </p>
 
 ### Screenshots
 <p align="center">
-<img src="screenshot.png" width="800" align="middle"><br>
+<img src="screenshot.png" width="900" align="middle"><br>
 The Desklet is fully customizable.
 </p>
 <br>
 
 <p align="center">
-<img src="screenshot2.png" width="800" align="middle"><br>
+<img src="screenshot2.png" width="900" align="middle"><br>
 A simple screenshot.
 </p>
 
