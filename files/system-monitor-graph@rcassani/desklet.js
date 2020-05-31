@@ -44,10 +44,6 @@ MyDesklet.prototype = {
         this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-ram", "line_color_ram", this.on_setting_changed);
         this.settings.bindProperty(Settings.BindingDirection.IN, "line-color-hdd", "line_color_hdd", this.on_setting_changed);
 
-
-
-
-
         // initialize desklet GUI
         this.setupUI();
     },
@@ -58,8 +54,10 @@ MyDesklet.prototype = {
         this.canvas.remove_all_children();
         this.text1 = new St.Label();
         this.text2 = new St.Label();
+        this.text3 = new St.Label();
         this.canvas.add_actor(this.text1);
         this.canvas.add_actor(this.text2);
+        this.canvas.add_actor(this.text3);
         this.setContent(this.canvas);
 
         // flag to indicate the first loop of the Desklet
@@ -110,6 +108,7 @@ MyDesklet.prototype = {
         var v_midlines = this.v_midlines;
         let text1_size = 5 * unit_size / 3;
         let text2_size = 4 * unit_size / 3;
+        let text3_size = 3 * unit_size / 3;
         var radius = 2 * unit_size / 3;;
         var degrees = Math.PI / 180.0;
 
@@ -120,6 +119,7 @@ MyDesklet.prototype = {
         var value = 0.0;
         var text1 = '';
         var text2 = '';
+        var text3 = '';
         var line_colors = this.parse_rgba_seetings(this.line_color);
 
         // current values
@@ -136,9 +136,9 @@ MyDesklet.prototype = {
               let ram_use = 100 * ram_values[1] / ram_values[0];
               value = ram_use / 100;
               text1 = "RAM";
-              text2 = Math.round(ram_use).toString() + "%   "
-                    + ram_values[1].toFixed(1) + " / " + ram_values[0].toFixed(1)
-                    + " GB";
+              text2 = Math.round(ram_use).toString() + "%"
+              text3 = ram_values[1].toFixed(1) + " / "
+                    + ram_values[0].toFixed(1) + " GB";
               break;
 
           case "hdd":
@@ -148,9 +148,10 @@ MyDesklet.prototype = {
               let hdd_use = Math.min(hdd_values[1], 100); //already in %
               value = hdd_use / 100;
               text1 = hdd_values[0];
-              text2 = Math.round(hdd_use).toString() + "%   "
-                    + hdd_values[3].toFixed(1) + " GB free of "
-                    + hdd_values[2].toFixed(1) + " GB";
+              text2 = Math.round(hdd_use).toString() + "%"
+              text3 = hdd_values[3].toFixed(0) + " GB free of "
+                    + hdd_values[2].toFixed(0) + " GB";
+
 
               break;
         }
@@ -227,9 +228,13 @@ MyDesklet.prototype = {
         this.text1.set_text(text1);
         this.text1.style = "font-size: " + text1_size + "px;"
                          + "color: " + this.text_color + ";";
-        this.text2.set_position(5 * unit_size, unit_size);
+        this.text2.set_position(6 * unit_size, unit_size);
         this.text2.set_text(text2);
         this.text2.style = "font-size: " + text2_size + "px;"
+                         + "color: " + this.text_color + ";";
+        this.text3.set_position(10 * unit_size, unit_size * 1.4);
+        this.text3.set_text(text3);
+        this.text3.style = "font-size: " + text3_size + "px;"
                          + "color: " + this.text_color + ";";
 
         // update canvas
